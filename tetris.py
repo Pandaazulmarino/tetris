@@ -9,6 +9,7 @@ ALTO_PANTALLA = ALTO_TABLERO * TAMANO_CELDA
 COLOR_FONDO = (0, 0, 0)
 COLOR_LINEA = (50, 50, 50)
 COLOR_SOMBRA = (200, 200, 200)
+COLOR_DESTELLO = (255, 255, 255) 
 
 pygame.init()
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
@@ -89,12 +90,26 @@ def fijar_pieza(tablero, pieza, x, y, color):
     eliminar_filas_completas(tablero)  
 
 def eliminar_filas_completas(tablero):
-    filas_eliminadas = 0
-    for fila in range(ALTO_TABLERO - 1, -1, -1):  
-        if 0 not in tablero[fila]:
-            del tablero[fila]  
-            tablero.insert(0, [0] * ANCHO_TABLERO)  
-            filas_eliminadas += 1
+    filas_a_eliminar = [fila for fila in range(ALTO_TABLERO) if 0 not in tablero[fila]]
+    if filas_a_eliminar:
+        for _ in range(3): 
+            for fila in filas_a_eliminar:
+                for columna in range(ANCHO_TABLERO):
+                    tablero[fila][columna] = COLOR_DESTELLO  
+            dibujar_tablero(tablero)
+            pygame.display.flip()
+            pygame.time.delay(100)
+
+            for fila in filas_a_eliminar:
+                for columna in range(ANCHO_TABLERO):
+                    tablero[fila][columna] = 0
+            dibujar_tablero(tablero)
+            pygame.display.flip()
+            pygame.time.delay(100)
+        
+        for fila in filas_a_eliminar:
+            del tablero[fila]
+            tablero.insert(0, [0] * ANCHO_TABLERO) 
 
 def eliminar_lineas_completas(tablero):
     lineas_borradas = 0
@@ -155,7 +170,7 @@ def juego():
                     pieza, x = rotar_pieza(pieza, tablero, x, y)
 
         contador_bajada += 1
-        if contador_bajada >= 20:
+        if contador_bajada >= 10:
             if not colision(tablero, pieza, x, y + 1):
                 y += 1
             else:
@@ -191,6 +206,6 @@ def mostrar_game_over(tiempo_total, puntaje):
     pantalla.blit(texto_puntaje_final, (ANCHO_PANTALLA // 2 - texto_puntaje_final.get_width() // 2, ALTO_PANTALLA // 2))
     pantalla.blit(texto_tiempo_final, (ANCHO_PANTALLA // 2 - texto_tiempo_final.get_width() // 2, ALTO_PANTALLA // 2 + 40))
     pygame.display.flip()
-    pygame.time.delay(3000)  # Pausa de 3 segundos para mostrar el mensaje
+    pygame.time.delay(3000)  
 
 juego()
