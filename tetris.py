@@ -87,6 +87,15 @@ def fijar_pieza(tablero, pieza, x, y, color):
         for columna in range(len(pieza[fila])):
             if pieza[fila][columna] != 0:
                 tablero[y + fila][x + columna] = color
+    eliminar_filas_completas(tablero)  
+
+def eliminar_filas_completas(tablero):
+    filas_eliminadas = 0
+    for fila in range(ALTO_TABLERO - 1, -1, -1):  
+        if 0 not in tablero[fila]:
+            del tablero[fila]  
+            tablero.insert(0, [0] * ANCHO_TABLERO)  
+            filas_eliminadas += 1
 
 def rotar_pieza(pieza, tablero, x, y):
     pieza_rotada = [list(fila) for fila in zip(*pieza[::-1])]
@@ -133,7 +142,7 @@ def juego():
                     pieza = rotar_pieza(pieza, tablero, x, y)
 
         contador_bajada += 1
-        if contador_bajada >= 10:
+        if contador_bajada >= 20:
             if not colision(tablero, pieza, x, y + 1):
                 y += 1
             else:
@@ -141,9 +150,6 @@ def juego():
                 pieza, color = nueva_pieza()
                 x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
                 if colision(tablero, pieza, x, y):
-                    
-        tiempo_total = time.time() - tiempo_inicio
-                    print(f"Tiempo total: {tiempo_total:.2f} segundos")
                     print("Game Over")
                     ejecutando = False
             contador_bajada = 0
