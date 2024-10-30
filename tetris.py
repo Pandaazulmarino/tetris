@@ -90,9 +90,9 @@ def fijar_pieza(tablero, pieza, x, y, color):
 def eliminar_lineas_completas(tablero):
     lineas_borradas = 0
     for fila in range(ALTO_TABLERO):
-        if 0 not in tablero[fila]:  # Si la fila está completa
-            del tablero[fila]  # Eliminar la fila
-            tablero.insert(0, [0] * ANCHO_TABLERO)  # Añadir una fila vacía arriba
+        if 0 not in tablero[fila]:
+            del tablero[fila]
+            tablero.insert(0, [0] * ANCHO_TABLERO)
             lineas_borradas += 1
     return lineas_borradas
 
@@ -109,17 +109,12 @@ def actualizar_puntaje(lineas_borradas, puntaje):
 
 def rotar_pieza(pieza, tablero, x, y):
     pieza_rotada = [list(fila) for fila in zip(*pieza[::-1])]
-    
-    # Verifica colisión en la posición actual
     if not colision(tablero, pieza_rotada, x, y):
         return pieza_rotada, x
-    
-    # Intenta mover la pieza un espacio a la izquierda o derecha si hay colisión
     if x > 0 and not colision(tablero, pieza_rotada, x - 1, y):
         return pieza_rotada, x - 1
     if x < ANCHO_TABLERO - len(pieza_rotada[0]) and not colision(tablero, pieza_rotada, x + 1, y):
         return pieza_rotada, x + 1
-    
     return pieza, x
 
 def juego():
@@ -161,12 +156,11 @@ def juego():
                 pieza, color = nueva_pieza()
                 x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
                 if colision(tablero, pieza, x, y):
-                    tiempo_total = time.time() - tiempo_inicio
-                    print("Game Over - Tiempo:", round(tiempo_total, 2), "s, Puntaje:", puntaje)
+                    tiempo_total = round(time.time() - tiempo_inicio, 2)
                     ejecutando = False
+                    mostrar_game_over(tiempo_total, puntaje)
             contador_bajada = 0
 
-        # Mostrar puntaje y tiempo transcurrido en pantalla
         texto_puntaje = fuente.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
         pantalla.blit(texto_puntaje, (10, 10))
         tiempo_actual = round(time.time() - tiempo_inicio, 2)
@@ -177,5 +171,16 @@ def juego():
         reloj.tick(30)
 
     pygame.quit()
+
+def mostrar_game_over(tiempo_total, puntaje):
+    pantalla.fill(COLOR_FONDO)
+    texto_game_over = fuente.render("Game Over", True, (255, 0, 0))
+    texto_puntaje_final = fuente.render(f"Puntaje Final: {puntaje}", True, (255, 255, 255))
+    texto_tiempo_final = fuente.render(f"Tiempo Total: {tiempo_total}s", True, (255, 255, 255))
+    pantalla.blit(texto_game_over, (ANCHO_PANTALLA // 2 - texto_game_over.get_width() // 2, ALTO_PANTALLA // 2 - 60))
+    pantalla.blit(texto_puntaje_final, (ANCHO_PANTALLA // 2 - texto_puntaje_final.get_width() // 2, ALTO_PANTALLA // 2))
+    pantalla.blit(texto_tiempo_final, (ANCHO_PANTALLA // 2 - texto_tiempo_final.get_width() // 2, ALTO_PANTALLA // 2 + 40))
+    pygame.display.flip()
+    pygame.time.delay(3000)  # Pausa de 3 segundos para mostrar el mensaje
 
 juego()
