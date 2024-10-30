@@ -1,5 +1,6 @@
 import pygame
 import random
+import time 
 
 ANCHO_TABLERO, ALTO_TABLERO = 10, 20
 TAMANO_CELDA = 30
@@ -12,6 +13,7 @@ COLOR_SOMBRA = (200, 200, 200)  # Gris claro para la sombra
 pygame.init()
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
 pygame.display.set_caption("Tetris")
+fuente = pygame.font.SysFont(None, 48) 
 
 PIEZAS = {
     'I': [[1, 1, 1, 1]],
@@ -91,6 +93,16 @@ def rotar_pieza(pieza, tablero, x, y):
     if not colision(tablero, pieza_rotada, x, y):
         return pieza_rotada
     return pieza  # Si hay colisión, retorna sin rotar
+    
+def mostrar_game_over(tiempo_total):
+    texto_game_over = fuente.render("Game Over", True, (255, 0, 0))
+    texto_tiempo = fuente.render(f"Tiempo: {tiempo_total:.2f} s", True, (255, 255, 255))
+    pantalla.blit(texto_game_over, (ANCHO_PANTALLA // 2 - texto_game_over.get_width() // 2, ALTO_PANTALLA // 2 - 50))
+    pantalla.blit(texto_tiempo, (ANCHO_PANTALLA // 2 - texto_tiempo.get_width() // 2, ALTO_PANTALLA // 2 + 10))
+    pygame.display.flip()
+    pygame.time.delay(3000) 
+
+
 
 def juego():
     tablero = crear_tablero()
@@ -98,6 +110,8 @@ def juego():
     x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
     reloj = pygame.time.Clock()
     contador_bajada = 0
+
+    tiempo_inicio = time.time()
     
     ejecutando = True
     while ejecutando:
@@ -127,6 +141,9 @@ def juego():
                 pieza, color = nueva_pieza()
                 x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
                 if colision(tablero, pieza, x, y):
+                    
+        tiempo_total = time.time() - tiempo_inicio
+                    print(f"Tiempo total: {tiempo_total:.2f} segundos")
                     print("Game Over")
                     ejecutando = False
             contador_bajada = 0
