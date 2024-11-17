@@ -9,7 +9,7 @@ ALTO_PANTALLA = ALTO_TABLERO * TAMANO_CELDA
 COLOR_FONDO = (0, 0, 0)
 COLOR_LINEA = (50, 50, 50)
 COLOR_SOMBRA = (200, 200, 200)
-COLOR_DESTELLO = (255, 255, 255) 
+COLOR_DESTELLO = (255, 255, 255)  # Color del destello
 
 pygame.init()
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
@@ -87,34 +87,22 @@ def fijar_pieza(tablero, pieza, x, y, color):
         for columna in range(len(pieza[fila])):
             if pieza[fila][columna] != 0:
                 tablero[y + fila][x + columna] = color
-    eliminar_filas_completas(tablero)  
-
-def eliminar_filas_completas(tablero):
-    filas_a_eliminar = [fila for fila in range(ALTO_TABLERO) if 0 not in tablero[fila]]
-    if filas_a_eliminar:
-        for _ in range(3): 
-            for fila in filas_a_eliminar:
-                for columna in range(ANCHO_TABLERO):
-                    tablero[fila][columna] = COLOR_DESTELLO  
-            dibujar_tablero(tablero)
-            pygame.display.flip()
-            pygame.time.delay(100)
-
-            for fila in filas_a_eliminar:
-                for columna in range(ANCHO_TABLERO):
-                    tablero[fila][columna] = 0
-            dibujar_tablero(tablero)
-            pygame.display.flip()
-            pygame.time.delay(100)
-        
-        for fila in filas_a_eliminar:
-            del tablero[fila]
-            tablero.insert(0, [0] * ANCHO_TABLERO) 
+    # Eliminar líneas completas y obtener el número de líneas eliminadas
+    lineas_borradas = eliminar_lineas_completas(tablero)  
+    return lineas_borradas
 
 def eliminar_lineas_completas(tablero):
     lineas_borradas = 0
     for fila in range(ALTO_TABLERO):
-        if 0 not in tablero[fila]:
+        if 0 not in tablero[fila]:  # Fila completa
+            # Efecto de destello: colorear la fila eliminada de blanco
+            for columna in range(ANCHO_TABLERO):
+                tablero[fila][columna] = COLOR_DESTELLO
+            dibujar_tablero(tablero)
+            pygame.display.flip()
+            pygame.time.delay(100)  # Mantener el destello por 100 ms
+
+            # Luego borrar la fila
             del tablero[fila]
             tablero.insert(0, [0] * ANCHO_TABLERO)
             lineas_borradas += 1
@@ -174,8 +162,8 @@ def juego():
             if not colision(tablero, pieza, x, y + 1):
                 y += 1
             else:
-                fijar_pieza(tablero, pieza, x, y, color)
-                lineas_borradas = eliminar_lineas_completas(tablero)
+                # Fijar la pieza y obtener las líneas borradas
+                lineas_borradas = fijar_pieza(tablero, pieza, x, y, color)
                 puntaje = actualizar_puntaje(lineas_borradas, puntaje)
                 pieza, color = nueva_pieza()
                 x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
@@ -206,6 +194,7 @@ def mostrar_game_over(tiempo_total, puntaje):
     pantalla.blit(texto_puntaje_final, (ANCHO_PANTALLA // 2 - texto_puntaje_final.get_width() // 2, ALTO_PANTALLA // 2))
     pantalla.blit(texto_tiempo_final, (ANCHO_PANTALLA // 2 - texto_tiempo_final.get_width() // 2, ALTO_PANTALLA // 2 + 40))
     pygame.display.flip()
-    pygame.time.delay(3000)  
+    pygame.time.delay(3000)
 
-juego()
+if __name__ == "__main__":
+    juego()
