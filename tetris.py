@@ -139,68 +139,107 @@ def dibujar_pieza_siguiente(pieza, color):
                 pygame.draw.rect(pantalla, COLOR_LINEA,
                                  ((offset_x + columna) * TAMANO_CELDA, (offset_y + fila) * TAMANO_CELDA, TAMANO_CELDA, TAMANO_CELDA), 1)
 
-def juego():
-    tablero = crear_tablero()
-    pieza, color = nueva_pieza()
-    siguiente_pieza, siguiente_color = nueva_pieza()  # Guardamos la siguiente pieza
-    x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
-    reloj = pygame.time.Clock()
-    contador_bajada = 0
-    puntaje = 0
-    tiempo_inicio = time.time()  # Para mostrar el tiempo transcurrido
+def pantalla_final(puntaje, tiempo_total):
     ejecutando = True
-
     while ejecutando:
-        pantalla.fill(COLOR_FONDO)
-        dibujar_tablero(tablero)  # Dibuja la zona del tablero como antes
-        dibujar_pieza_actual(tablero, pieza, color, x, y)
+        pantalla.fill((0, 0, 0))  # Fondo negro
 
-        # Agregar un fondo extendido al lado derecho del tablero
-        pygame.draw.rect(pantalla, (50, 50, 50), (ANCHO_TABLERO * TAMANO_CELDA, 0, ANCHO_PANTALLA - ANCHO_TABLERO * TAMANO_CELDA, ALTO_PANTALLA))
-        dibujar_pieza_siguiente(siguiente_pieza, siguiente_color)  # Dibuja la siguiente pieza
+        # Mostrar mensaje final
+        mensaje_texto = fuente.render("¡Juego Terminado!", True, (255, 255, 255))
+        pantalla.blit(mensaje_texto, (ANCHO_PANTALLA // 2 - mensaje_texto.get_width() // 2, ALTO_PANTALLA // 2 - 100))
 
-        # Mostrar puntaje y tiempo
-        puntaje_texto = fuente.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
-        pantalla.blit(puntaje_texto, (ANCHO_TABLERO * TAMANO_CELDA + 10, 10))
+        # Mostrar puntaje final
+        puntaje_texto = fuente.render(f"Puntaje final: {puntaje}", True, (255, 255, 255))
+        pantalla.blit(puntaje_texto, (ANCHO_PANTALLA // 2 - puntaje_texto.get_width() // 2, ALTO_PANTALLA // 2 - 50))
 
-        tiempo_transcurrido = int(time.time() - tiempo_inicio)  # Calcular el tiempo transcurrido
-        tiempo_texto = fuente.render(f"Tiempo: {tiempo_transcurrido}s", True, (255, 255, 255))
-        pantalla.blit(tiempo_texto, (ANCHO_TABLERO * TAMANO_CELDA + 10, 50))
+        # Mostrar tiempo total
+        tiempo_texto = fuente.render(f"Tiempo total: {tiempo_total}s", True, (255, 255, 255))
+        pantalla.blit(tiempo_texto, (ANCHO_PANTALLA // 2 - tiempo_texto.get_width() // 2, ALTO_PANTALLA // 2))
+
+        # Mostrar opciones
+        opcion_reintentar = fuente.render("Presiona R para volver a jugar", True, (255, 255, 255))
+        pantalla.blit(opcion_reintentar, (ANCHO_PANTALLA // 2 - opcion_reintentar.get_width() // 2, ALTO_PANTALLA // 2 + 50))
+
+        opcion_salir = fuente.render("Presiona Q para salir", True, (255, 255, 255))
+        pantalla.blit(opcion_salir, (ANCHO_PANTALLA // 2 - opcion_salir.get_width() // 2, ALTO_PANTALLA // 2 + 100))
+
+        pygame.display.flip()
 
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
-                ejecutando = False
+                pygame.quit()
+                exit()
             elif evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_LEFT:
-                    if not colision(tablero, pieza, x - 1, y):
-                        x -= 1
-                elif evento.key == pygame.K_RIGHT:
-                    if not colision(tablero, pieza, x + 1, y):
-                        x += 1
-                elif evento.key == pygame.K_DOWN:
-                    if not colision(tablero, pieza, x, y + 1):
-                        y += 1
-                elif evento.key == pygame.K_UP:
-                    pieza, x = rotar_pieza(pieza, tablero, x, y)
+                if evento.key == pygame.K_r:  # Volver a jugar
+                    return True
+                elif evento.key == pygame.K_q:  # Salir
+                    pygame.quit()
+                    exit()
 
-        if contador_bajada == 30:
-            if not colision(tablero, pieza, x, y + 1):
-                y += 1
-            else:
-                lineas_borradas = fijar_pieza(tablero, pieza, x, y, color)
-                puntaje = actualizar_puntaje(lineas_borradas, puntaje)
-                pieza, color = siguiente_pieza, siguiente_color
-                siguiente_pieza, siguiente_color = nueva_pieza()
-                x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
-                if colision(tablero, pieza, x, y):
-                    ejecutando = False
-            contador_bajada = 0
+def juego():
+    while True:  # Bucle principal para reiniciar el juego si es necesario
+        tablero = crear_tablero()
+        pieza, color = nueva_pieza()
+        siguiente_pieza, siguiente_color = nueva_pieza()
+        x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
+        reloj = pygame.time.Clock()
+        contador_bajada = 0
+        puntaje = 0
+        tiempo_inicio = time.time()
+        ejecutando = True
 
-        pygame.display.flip()
-        reloj.tick(60)
-        contador_bajada += 1
+        while ejecutando:
+            pantalla.fill(COLOR_FONDO)
+            dibujar_tablero(tablero)
+            dibujar_pieza_actual(tablero, pieza, color, x, y)
+            pygame.draw.rect(pantalla, (50, 50, 50), (ANCHO_TABLERO * TAMANO_CELDA, 0, ANCHO_PANTALLA - ANCHO_TABLERO * TAMANO_CELDA, ALTO_PANTALLA))
+            dibujar_pieza_siguiente(siguiente_pieza, siguiente_color)
 
-    pygame.quit()
+            puntaje_texto = fuente.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
+            pantalla.blit(puntaje_texto, (ANCHO_TABLERO * TAMANO_CELDA + 10, 10))
+
+            tiempo_transcurrido = int(time.time() - tiempo_inicio)
+            tiempo_texto = fuente.render(f"Tiempo: {tiempo_transcurrido}s", True, (255, 255, 255))
+            pantalla.blit(tiempo_texto, (ANCHO_TABLERO * TAMANO_CELDA + 10, 50))
+
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    pygame.quit()
+                    exit()
+                elif evento.type == pygame.KEYDOWN:
+                    if evento.key == pygame.K_LEFT:
+                        if not colision(tablero, pieza, x - 1, y):
+                            x -= 1
+                    elif evento.key == pygame.K_RIGHT:
+                        if not colision(tablero, pieza, x + 1, y):
+                            x += 1
+                    elif evento.key == pygame.K_DOWN:
+                        if not colision(tablero, pieza, x, y + 1):
+                            y += 1
+                    elif evento.key == pygame.K_UP:
+                        pieza, x = rotar_pieza(pieza, tablero, x, y)
+
+            if contador_bajada == 30:
+                if not colision(tablero, pieza, x, y + 1):
+                    y += 1
+                else:
+                    lineas_borradas = fijar_pieza(tablero, pieza, x, y, color)
+                    puntaje = actualizar_puntaje(lineas_borradas, puntaje)
+                    pieza, color = siguiente_pieza, siguiente_color
+                    siguiente_pieza, siguiente_color = nueva_pieza()
+                    x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
+                    if colision(tablero, pieza, x, y):
+                        ejecutando = False
+                contador_bajada = 0
+
+            pygame.display.flip()
+            reloj.tick(60)
+            contador_bajada += 1
+
+        # Pantalla final
+        tiempo_total = int(time.time() - tiempo_inicio)
+        if not pantalla_final(puntaje, tiempo_total):
+            break
 
 if __name__ == "__main__":
     juego()
