@@ -4,12 +4,12 @@ import time
 
 ANCHO_TABLERO, ALTO_TABLERO = 10, 20
 TAMANO_CELDA = 30
-ANCHO_PANTALLA = ANCHO_TABLERO * TAMANO_CELDA
+ANCHO_PANTALLA = ANCHO_TABLERO * TAMANO_CELDA + 200  # Ampliado el ancho para la zona derecha
 ALTO_PANTALLA = ALTO_TABLERO * TAMANO_CELDA
 COLOR_FONDO = (0, 0, 0)
 COLOR_LINEA = (50, 50, 50)
 COLOR_SOMBRA = (200, 200, 200)
-COLOR_DESTELLO = (255, 255, 255)  # Color del destello
+COLOR_DESTELLO = (255, 255, 255)  
 
 pygame.init()
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
@@ -87,22 +87,19 @@ def fijar_pieza(tablero, pieza, x, y, color):
         for columna in range(len(pieza[fila])):
             if pieza[fila][columna] != 0:
                 tablero[y + fila][x + columna] = color
-    # Eliminar líneas completas y obtener el número de líneas eliminadas
     lineas_borradas = eliminar_lineas_completas(tablero)  
     return lineas_borradas
 
 def eliminar_lineas_completas(tablero):
     lineas_borradas = 0
     for fila in range(ALTO_TABLERO):
-        if 0 not in tablero[fila]:  # Fila completa
-            # Efecto de destello: colorear la fila eliminada de blanco
+        if 0 not in tablero[fila]:
             for columna in range(ANCHO_TABLERO):
                 tablero[fila][columna] = COLOR_DESTELLO
             dibujar_tablero(tablero)
             pygame.display.flip()
-            pygame.time.delay(100)  # Mantener el destello por 100 ms
+            pygame.time.delay(100) 
 
-            # Luego borrar la fila
             del tablero[fila]
             tablero.insert(0, [0] * ANCHO_TABLERO)
             lineas_borradas += 1
@@ -129,9 +126,21 @@ def rotar_pieza(pieza, tablero, x, y):
         return pieza_rotada, x + 1
     return pieza, x
 
+def dibujar_pieza_siguiente(pieza, color):
+    """Dibuja la pieza siguiente en la parte derecha de la pantalla dentro del área extendida"""
+    offset_x, offset_y = ANCHO_TABLERO + 2, 3  # Ajusta esta posición a donde desees mostrarla
+    for fila in range(len(pieza)):
+        for columna in range(len(pieza[fila])):
+            if pieza[fila][columna] != 0:
+                pygame.draw.rect(pantalla, color,
+                                 ((offset_x + columna) * TAMANO_CELDA, (offset_y + fila) * TAMANO_CELDA, TAMANO_CELDA, TAMANO_CELDA))
+                pygame.draw.rect(pantalla, COLOR_LINEA,
+                                 ((offset_x + columna) * TAMANO_CELDA, (offset_y + fila) * TAMANO_CELDA, TAMANO_CELDA, TAMANO_CELDA), 1)
+
 def juego():
     tablero = crear_tablero()
     pieza, color = nueva_pieza()
+    siguiente_pieza, siguiente_color = nueva_pieza()  # Guardamos la siguiente pieza
     x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
     reloj = pygame.time.Clock()
     contador_bajada = 0
@@ -141,8 +150,14 @@ def juego():
 
     while ejecutando:
         pantalla.fill(COLOR_FONDO)
-        dibujar_tablero(tablero)
+        dibujar_tablero(tablero)  # Dibuja la zona del tablero como antes
         dibujar_pieza_actual(tablero, pieza, color, x, y)
+
+        # Agregar un fondo extendido al lado derecho del tablero
+        pygame.draw.rect(pantalla, (50, 50, 50), (ANCHO_TABLERO * TAMANO_CELDA, 0, ANCHO_PANTALLA - ANCHO_TABLERO * TAMANO_CELDA, ALTO_PANTALLA)) 
+
+        # Mostrar la siguiente pieza en ese fondo extendido
+        dibujar_pieza_siguiente(siguiente_pieza, siguiente_color)
 
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
@@ -165,7 +180,8 @@ def juego():
                 # Fijar la pieza y obtener las líneas borradas
                 lineas_borradas = fijar_pieza(tablero, pieza, x, y, color)
                 puntaje = actualizar_puntaje(lineas_borradas, puntaje)
-                pieza, color = nueva_pieza()
+                pieza, color = siguiente_pieza, siguiente_color  # La siguiente pieza pasa a ser la actual
+                siguiente_pieza, siguiente_color = nueva_pieza()  # Generar una nueva pieza siguiente
                 x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
                 if colision(tablero, pieza, x, y):
                     print("Game Over")
@@ -185,16 +201,15 @@ def juego():
 
     pygame.quit()
 
-def mostrar_game_over(tiempo_total, puntaje):
+def mostrar_game_over(tiempo, puntaje):
+    """Mostrar mensaje de game over con puntaje y tiempo"""
     pantalla.fill(COLOR_FONDO)
-    texto_game_over = fuente.render("Game Over", True, (255, 0, 0))
-    texto_puntaje_final = fuente.render(f"Puntaje Final: {puntaje}", True, (255, 255, 255))
-    texto_tiempo_final = fuente.render(f"Tiempo Total: {tiempo_total}s", True, (255, 255, 255))
-    pantalla.blit(texto_game_over, (ANCHO_PANTALLA // 2 - texto_game_over.get_width() // 2, ALTO_PANTALLA // 2 - 60))
-    pantalla.blit(texto_puntaje_final, (ANCHO_PANTALLA // 2 - texto_puntaje_final.get_width() // 2, ALTO_PANTALLA // 2))
-    pantalla.blit(texto_tiempo_final, (ANCHO_PANTALLA // 2 - texto_tiempo_final.get_width() // 2, ALTO_PANTALLA // 2 + 40))
+    mensaje = fuente.render(f"Game Over - Puntaje: {puntaje}", True, (255, 255, 255))
+    tiempo_mensaje = fuente.render(f"Tiempo: {tiempo}s", True, (255, 255, 255))
+    pantalla.blit(mensaje, (ANCHO_PANTALLA // 4, ALTO_PANTALLERO // 2))
+    pantalla.blit(tiempo_mensaje, (ANCHO_PANTALLA // 4, ALTO_PANTALLERO // 2 + 40))
     pygame.display.flip()
-    pygame.time.delay(3000)
+    pygame.time.delay(2000)
 
 if __name__ == "__main__":
     juego()
