@@ -1,11 +1,13 @@
 import pygame
 import random
 import time
+import os
 
+# Aumento del tamaño de la ventana y las celdas
 ANCHO_TABLERO, ALTO_TABLERO = 10, 20
-TAMANO_CELDA = 30
-ANCHO_PANTALLA = ANCHO_TABLERO * TAMANO_CELDA + 200  # Ampliado el ancho para la zona derecha
-ALTO_PANTALLA = ALTO_TABLERO * TAMANO_CELDA
+TAMANO_CELDA = 30  # Tamaño de las celdas ajustado
+ANCHO_PANTALLA = (ANCHO_TABLERO * TAMANO_CELDA) + 200  # Aumento de la ventana para caber el tablero y la siguiente pieza
+ALTO_PANTALLA = ALTO_TABLERO * TAMANO_CELDA  # Mantiene el alto para el tablero
 COLOR_FONDO = (0, 0, 0)
 COLOR_LINEA = (50, 50, 50)
 COLOR_SOMBRA = (200, 200, 200)
@@ -128,7 +130,7 @@ def rotar_pieza(pieza, tablero, x, y):
 
 def dibujar_pieza_siguiente(pieza, color):
     """Dibuja la pieza siguiente en la parte derecha de la pantalla dentro del área extendida"""
-    offset_x, offset_y = ANCHO_TABLERO + 2, 3  # Ajusta esta posición a donde desees mostrarla
+    offset_x, offset_y = ANCHO_TABLERO + 1, 3  # Ajusta esta posición a donde desees mostrarla
     for fila in range(len(pieza)):
         for columna in range(len(pieza[fila])):
             if pieza[fila][columna] != 0:
@@ -145,7 +147,7 @@ def juego():
     reloj = pygame.time.Clock()
     contador_bajada = 0
     puntaje = 0
-    tiempo_inicio = time.time()
+    tiempo_inicio = time.time()  # Para mostrar el tiempo transcurrido
     ejecutando = True
 
     while ejecutando:
@@ -154,62 +156,51 @@ def juego():
         dibujar_pieza_actual(tablero, pieza, color, x, y)
 
         # Agregar un fondo extendido al lado derecho del tablero
-        pygame.draw.rect(pantalla, (50, 50, 50), (ANCHO_TABLERO * TAMANO_CELDA, 0, ANCHO_PANTALLA - ANCHO_TABLERO * TAMANO_CELDA, ALTO_PANTALLA)) 
+        pygame.draw.rect(pantalla, (50, 50, 50), (ANCHO_TABLERO * TAMANO_CELDA, 0, ANCHO_PANTALLA - ANCHO_TABLERO * TAMANO_CELDA, ALTO_PANTALLA))
+        dibujar_pieza_siguiente(siguiente_pieza, siguiente_color)  # Dibuja la siguiente pieza
 
-        # Mostrar la siguiente pieza en ese fondo extendido
-        dibujar_pieza_siguiente(siguiente_pieza, siguiente_color)
+        # Mostrar puntaje y tiempo
+        puntaje_texto = fuente.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
+        pantalla.blit(puntaje_texto, (ANCHO_TABLERO * TAMANO_CELDA + 10, 10))
+
+        tiempo_transcurrido = int(time.time() - tiempo_inicio)  # Calcular el tiempo transcurrido
+        tiempo_texto = fuente.render(f"Tiempo: {tiempo_transcurrido}s", True, (255, 255, 255))
+        pantalla.blit(tiempo_texto, (ANCHO_TABLERO * TAMANO_CELDA + 10, 50))
 
         for evento in pygame.event.get():
             if evento.type == pygame.QUIT:
                 ejecutando = False
             elif evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_LEFT and not colision(tablero, pieza, x - 1, y):
-                    x -= 1
-                elif evento.key == pygame.K_RIGHT and not colision(tablero, pieza, x + 1, y):
-                    x += 1
-                elif evento.key == pygame.K_DOWN and not colision(tablero, pieza, x, y + 1):
-                    y += 1
+                if evento.key == pygame.K_LEFT:
+                    if not colision(tablero, pieza, x - 1, y):
+                        x -= 1
+                elif evento.key == pygame.K_RIGHT:
+                    if not colision(tablero, pieza, x + 1, y):
+                        x += 1
+                elif evento.key == pygame.K_DOWN:
+                    if not colision(tablero, pieza, x, y + 1):
+                        y += 1
                 elif evento.key == pygame.K_UP:
                     pieza, x = rotar_pieza(pieza, tablero, x, y)
 
-        contador_bajada += 1
-        if contador_bajada >= 10:
+        if contador_bajada == 30:
             if not colision(tablero, pieza, x, y + 1):
                 y += 1
             else:
-                # Fijar la pieza y obtener las líneas borradas
                 lineas_borradas = fijar_pieza(tablero, pieza, x, y, color)
                 puntaje = actualizar_puntaje(lineas_borradas, puntaje)
-                pieza, color = siguiente_pieza, siguiente_color  # La siguiente pieza pasa a ser la actual
-                siguiente_pieza, siguiente_color = nueva_pieza()  # Generar una nueva pieza siguiente
+                pieza, color = siguiente_pieza, siguiente_color
+                siguiente_pieza, siguiente_color = nueva_pieza()
                 x, y = ANCHO_TABLERO // 2 - len(pieza[0]) // 2, 0
                 if colision(tablero, pieza, x, y):
-                    print("Game Over")
-                    tiempo_total = round(time.time() - tiempo_inicio, 2)
                     ejecutando = False
-                    mostrar_game_over(tiempo_total, puntaje)
             contador_bajada = 0
 
-        texto_puntaje = fuente.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
-        pantalla.blit(texto_puntaje, (10, 10))
-        tiempo_actual = round(time.time() - tiempo_inicio, 2)
-        texto_tiempo = fuente.render(f"Tiempo: {tiempo_actual}s", True, (255, 255, 255))
-        pantalla.blit(texto_tiempo, (10, 40))
-
         pygame.display.flip()
-        reloj.tick(30)
+        reloj.tick(60)
+        contador_bajada += 1
 
     pygame.quit()
-
-def mostrar_game_over(tiempo, puntaje):
-    """Mostrar mensaje de game over con puntaje y tiempo"""
-    pantalla.fill(COLOR_FONDO)
-    mensaje = fuente.render(f"Game Over - Puntaje: {puntaje}", True, (255, 255, 255))
-    tiempo_mensaje = fuente.render(f"Tiempo: {tiempo}s", True, (255, 255, 255))
-    pantalla.blit(mensaje, (ANCHO_PANTALLA // 4, ALTO_PANTALLERO // 2))
-    pantalla.blit(tiempo_mensaje, (ANCHO_PANTALLA // 4, ALTO_PANTALLERO // 2 + 40))
-    pygame.display.flip()
-    pygame.time.delay(2000)
 
 if __name__ == "__main__":
     juego()
