@@ -92,19 +92,36 @@ def fijar_pieza(tablero, pieza, x, y, color):
     lineas_borradas = eliminar_lineas_completas(tablero)  
     return lineas_borradas
 
+MARGEN_HORIZONTAL = (ANCHO_PANTALLA - ANCHO_TABLERO * TAMANO_CELDA) // 2
+
 def eliminar_lineas_completas(tablero):
     lineas_borradas = 0
+    filas_a_eliminar = []
+
+    # Identificar las filas completas
     for fila in range(ALTO_TABLERO):
         if 0 not in tablero[fila]:
-            for columna in range(ANCHO_TABLERO):
-                tablero[fila][columna] = COLOR_DESTELLO
-            dibujar_tablero(tablero)
-            pygame.display.flip()
-            pygame.time.delay(100) 
+            filas_a_eliminar.append(fila)
 
-            del tablero[fila]
-            tablero.insert(0, [0] * ANCHO_TABLERO)
-            lineas_borradas += 1
+    # Si hay filas para eliminar, se hace el destello
+    for fila in filas_a_eliminar:
+        # Dibujar el destello en las celdas correspondientes del tablero
+        for columna in range(ANCHO_TABLERO):
+            pygame.draw.rect(
+                pantalla,
+                COLOR_DESTELLO,  # Color del destello (blanco)
+                ((columna + MARGEN_HORIZONTAL) * TAMANO_CELDA, fila * TAMANO_CELDA, TAMANO_CELDA, TAMANO_CELDA)
+            )
+
+        pygame.display.update()  # Actualizar solo las celdas que contienen la fila eliminada
+        pygame.time.delay(200)  # Pausa para que el destello sea visible
+
+    # Ahora eliminar las filas completas lógicamente
+    for fila in filas_a_eliminar:
+        del tablero[fila]
+        tablero.insert(0, [0] * ANCHO_TABLERO)  # Insertamos una nueva fila vacía
+        lineas_borradas += 1
+
     return lineas_borradas
 
 def actualizar_puntaje(lineas_borradas, puntaje):
@@ -175,9 +192,21 @@ def pantalla_final(puntaje, tiempo_total):
                 elif evento.key == pygame.K_q:  # Salir
                     pygame.quit()
                     exit()
-
 def juego():
-    while True:  # Bucle principal para reiniciar el juego si es necesario
+    global pantalla
+    pantalla = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+    info_pantalla = pygame.display.Info()
+    global ANCHO_PANTALLA, ALTO_PANTALLA, TAMANO_CELDA, ANCHO_TABLERO, ALTO_TABLERO
+
+    ANCHO_PANTALLA = info_pantalla.current_w
+    ALTO_PANTALLA = info_pantalla.current_h
+    TAMANO_CELDA = min(ALTO_PANTALLA // ALTO_TABLERO, (ANCHO_PANTALLA - 400) // ANCHO_TABLERO)
+
+    # Offset para centrar el tablero
+    offset_x = (ANCHO_PANTALLA - (ANCHO_TABLERO * TAMANO_CELDA)) // 2
+    offset_y = (ALTO_PANTALLA - (ALTO_TABLERO * TAMANO_CELDA)) // 2
+
+    while True:
         tablero = crear_tablero()
         pieza, color = nueva_pieza()
         siguiente_pieza, siguiente_color = nueva_pieza()
@@ -189,25 +218,40 @@ def juego():
         ejecutando = True
 
         while ejecutando:
-            pantalla.fill(COLOR_FONDO)
-            dibujar_tablero(tablero)
-            dibujar_pieza_actual(tablero, pieza, color, x, y)
-            pygame.draw.rect(pantalla, (50, 50, 50), (ANCHO_TABLERO * TAMANO_CELDA, 0, ANCHO_PANTALLA - ANCHO_TABLERO * TAMANO_CELDA, ALTO_PANTALLA))
-            dibujar_pieza_siguiente(siguiente_pieza, siguiente_color)
-
+            # Pintar toda la pantalla con gris oscuro
+            pantalla.fill((50, 50, 50))  
+            
+            # Pintar solo la zona del tablero con fondo negro
+            pygame.draw.rect(pantalla, COLOR_FONDO,
+                             (offset_x, offset_y, ANCHO_TABLERO * TAMANO_CELDA, ALTO_TABLERO * TAMANO_CELDA))
+            
+            # Dibujar el tablero y la pieza actual dentro del área negra
+            dibujar_tablero_centrado(tablero, offset_x, offset_y)
+            dibujar_pieza_actual_centrada(tablero, pieza, color, x, y, offset_x, offset_y)
+            
+            # Fondo gris para la interfaz adicional a la derecha
+            pygame.draw.rect(pantalla, (50, 50, 50), (offset_x + ANCHO_TABLERO * TAMANO_CELDA, offset_y,
+                                                      ANCHO_PANTALLA - (offset_x + ANCHO_TABLERO * TAMANO_CELDA),
+                                                      ALTO_TABLERO * TAMANO_CELDA))
+            
+            # Dibujar la pieza siguiente y texto
+            dibujar_pieza_siguiente_centrada(siguiente_pieza, siguiente_color, offset_x + ANCHO_TABLERO * TAMANO_CELDA)
             puntaje_texto = fuente.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
-            pantalla.blit(puntaje_texto, (ANCHO_TABLERO * TAMANO_CELDA + 10, 10))
-
+            pantalla.blit(puntaje_texto, (offset_x + ANCHO_TABLERO * TAMANO_CELDA + 10, offset_y + 10))
+            
             tiempo_transcurrido = int(time.time() - tiempo_inicio)
             tiempo_texto = fuente.render(f"Tiempo: {tiempo_transcurrido}s", True, (255, 255, 255))
-            pantalla.blit(tiempo_texto, (ANCHO_TABLERO * TAMANO_CELDA + 10, 50))
+            pantalla.blit(tiempo_texto, (offset_x + ANCHO_TABLERO * TAMANO_CELDA + 10, offset_y + 50))
 
             for evento in pygame.event.get():
                 if evento.type == pygame.QUIT:
                     pygame.quit()
                     exit()
                 elif evento.type == pygame.KEYDOWN:
-                    if evento.key == pygame.K_LEFT:
+                    if evento.key == pygame.K_ESCAPE:
+                        pygame.quit()
+                        exit()
+                    elif evento.key == pygame.K_LEFT:
                         if not colision(tablero, pieza, x - 1, y):
                             x -= 1
                     elif evento.key == pygame.K_RIGHT:
@@ -236,10 +280,57 @@ def juego():
             reloj.tick(60)
             contador_bajada += 1
 
-        # Pantalla final
         tiempo_total = int(time.time() - tiempo_inicio)
         if not pantalla_final(puntaje, tiempo_total):
             break
+
+def dibujar_tablero_centrado(tablero, offset_x, offset_y):
+    """Dibuja el tablero centrado en la pantalla."""
+    for fila in range(ALTO_TABLERO):
+        for columna in range(ANCHO_TABLERO):
+            if tablero[fila][columna] != 0:
+                color = tablero[fila][columna]
+                pygame.draw.rect(pantalla, color,
+                                 (offset_x + columna * TAMANO_CELDA, offset_y + fila * TAMANO_CELDA, TAMANO_CELDA, TAMANO_CELDA))
+            pygame.draw.rect(pantalla, COLOR_LINEA,
+                             (offset_x + columna * TAMANO_CELDA, offset_y + fila * TAMANO_CELDA, TAMANO_CELDA, TAMANO_CELDA), 1)
+
+
+def dibujar_pieza_actual_centrada(tablero, pieza, color, x, y, offset_x, offset_y):
+    """Dibuja la pieza actual teniendo en cuenta el centrado."""
+    sombra_y = calcular_sombra(tablero, pieza, x, y)
+    for fila in range(len(pieza)):
+        for columna in range(len(pieza[fila])):
+            if pieza[fila][columna] != 0:
+                pygame.draw.rect(pantalla, COLOR_SOMBRA,
+                                 (offset_x + (x + columna) * TAMANO_CELDA,
+                                  offset_y + (sombra_y + fila) * TAMANO_CELDA,
+                                  TAMANO_CELDA, TAMANO_CELDA))
+                pygame.draw.rect(pantalla, color,
+                                 (offset_x + (x + columna) * TAMANO_CELDA,
+                                  offset_y + (y + fila) * TAMANO_CELDA,
+                                  TAMANO_CELDA, TAMANO_CELDA))
+                pygame.draw.rect(pantalla, COLOR_LINEA,
+                                 (offset_x + (x + columna) * TAMANO_CELDA,
+                                  offset_y + (y + fila) * TAMANO_CELDA,
+                                  TAMANO_CELDA, TAMANO_CELDA), 1)
+
+
+def dibujar_pieza_siguiente_centrada(pieza, color, offset_x):
+    """Dibuja la siguiente pieza en el área derecha, centrada verticalmente."""
+    offset_y = (ALTO_PANTALLA - len(pieza) * TAMANO_CELDA) // 2
+    for fila in range(len(pieza)):
+        for columna in range(len(pieza[fila])):
+            if pieza[fila][columna] != 0:
+                pygame.draw.rect(pantalla, color,
+                                 (offset_x + columna * TAMANO_CELDA,
+                                  offset_y + fila * TAMANO_CELDA,
+                                  TAMANO_CELDA, TAMANO_CELDA))
+                pygame.draw.rect(pantalla, COLOR_LINEA,
+                                 (offset_x + columna * TAMANO_CELDA,
+                                  offset_y + fila * TAMANO_CELDA,
+                                  TAMANO_CELDA, TAMANO_CELDA), 1)
+
 
 if __name__ == "__main__":
     juego()
