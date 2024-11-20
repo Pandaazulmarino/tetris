@@ -3,11 +3,10 @@ import random
 import time
 import os
 
-# Aumento del tamaño de la ventana y las celdas
-ANCHO_TABLERO, ALTO_TABLERO = 10, 20
-TAMANO_CELDA = 30  # Tamaño de las celdas ajustado
-ANCHO_PANTALLA = (ANCHO_TABLERO * TAMANO_CELDA) + 200  # Aumento de la ventana para caber el tablero y la siguiente pieza
-ALTO_PANTALLA = ALTO_TABLERO * TAMANO_CELDA  # Mantiene el alto para el tablero
+ANCHO_TABLERO, ALTO_TABLERO = 10, 20 # tamaño de la matriz principal 
+TAMANO_CELDA = 30 
+ANCHO_PANTALLA = (ANCHO_TABLERO * TAMANO_CELDA) + 200 
+ALTO_PANTALLA = ALTO_TABLERO * TAMANO_CELDA  
 COLOR_FONDO = (0, 0, 0)
 COLOR_LINEA = (50, 50, 50)
 COLOR_SOMBRA = (200, 200, 200)
@@ -15,7 +14,7 @@ COLOR_DESTELLO = (255, 255, 255)
 
 pygame.init()
 pantalla = pygame.display.set_mode((ANCHO_PANTALLA, ALTO_PANTALLA))
-pygame.display.set_caption("Tetris")
+pygame.display.set_caption("Tetris Valeria - Isabela")
 fuente = pygame.font.SysFont(None, 36)
 
 PIEZAS = {
@@ -39,7 +38,7 @@ COLORES = {
 }
 
 def crear_tablero():
-    return [[0] * ANCHO_TABLERO for _ in range(ALTO_TABLERO)]
+    return [[0] * ANCHO_TABLERO for _ in range(ALTO_TABLERO)] #creacion matriz principal vacía
 
 def dibujar_tablero(tablero):
     pantalla.fill(COLOR_FONDO)
@@ -98,28 +97,24 @@ def eliminar_lineas_completas(tablero):
     lineas_borradas = 0
     filas_a_eliminar = []
 
-    # Identificar las filas completas
     for fila in range(ALTO_TABLERO):
         if 0 not in tablero[fila]:
             filas_a_eliminar.append(fila)
 
-    # Si hay filas para eliminar, se hace el destello
     for fila in filas_a_eliminar:
-        # Dibujar el destello en las celdas correspondientes del tablero
         for columna in range(ANCHO_TABLERO):
             pygame.draw.rect(
                 pantalla,
-                COLOR_DESTELLO,  # Color del destello (blanco)
+                COLOR_DESTELLO,  
                 ((columna + MARGEN_HORIZONTAL) * TAMANO_CELDA, fila * TAMANO_CELDA, TAMANO_CELDA, TAMANO_CELDA)
             )
 
-        pygame.display.update()  # Actualizar solo las celdas que contienen la fila eliminada
-        pygame.time.delay(200)  # Pausa para que el destello sea visible
+        pygame.display.update()  
+        pygame.time.delay(200)  
 
-    # Ahora eliminar las filas completas lógicamente
     for fila in filas_a_eliminar:
         del tablero[fila]
-        tablero.insert(0, [0] * ANCHO_TABLERO)  # Insertamos una nueva fila vacía
+        tablero.insert(0, [0] * ANCHO_TABLERO)  
         lineas_borradas += 1
 
     return lineas_borradas
@@ -145,9 +140,8 @@ def rotar_pieza(pieza, tablero, x, y):
         return pieza_rotada, x + 1
     return pieza, x
 
-def dibujar_pieza_siguiente(pieza, color):
-    """Dibuja la pieza siguiente en la parte derecha de la pantalla dentro del área extendida"""
-    offset_x, offset_y = ANCHO_TABLERO + 1, 3  # Ajusta esta posición a donde desees mostrarla
+def dibujar_pieza_siguiente(pieza, color): #dibuja la pieza sigueinte
+    offset_x, offset_y = ANCHO_TABLERO + 1, 3  
     for fila in range(len(pieza)):
         for columna in range(len(pieza[fila])):
             if pieza[fila][columna] != 0:
@@ -159,21 +153,17 @@ def dibujar_pieza_siguiente(pieza, color):
 def pantalla_final(puntaje, tiempo_total):
     ejecutando = True
     while ejecutando:
-        pantalla.fill((0, 0, 0))  # Fondo negro
+        pantalla.fill((0, 0, 0))  
 
-        # Mostrar mensaje final
         mensaje_texto = fuente.render("¡Juego Terminado!", True, (255, 255, 255))
         pantalla.blit(mensaje_texto, (ANCHO_PANTALLA // 2 - mensaje_texto.get_width() // 2, ALTO_PANTALLA // 2 - 100))
 
-        # Mostrar puntaje final
         puntaje_texto = fuente.render(f"Puntaje final: {puntaje}", True, (255, 255, 255))
         pantalla.blit(puntaje_texto, (ANCHO_PANTALLA // 2 - puntaje_texto.get_width() // 2, ALTO_PANTALLA // 2 - 50))
 
-        # Mostrar tiempo total
         tiempo_texto = fuente.render(f"Tiempo total: {tiempo_total}s", True, (255, 255, 255))
         pantalla.blit(tiempo_texto, (ANCHO_PANTALLA // 2 - tiempo_texto.get_width() // 2, ALTO_PANTALLA // 2))
 
-        # Mostrar opciones
         opcion_reintentar = fuente.render("Presiona R para volver a jugar", True, (255, 255, 255))
         pantalla.blit(opcion_reintentar, (ANCHO_PANTALLA // 2 - opcion_reintentar.get_width() // 2, ALTO_PANTALLA // 2 + 50))
 
@@ -187,13 +177,13 @@ def pantalla_final(puntaje, tiempo_total):
                 pygame.quit()
                 exit()
             elif evento.type == pygame.KEYDOWN:
-                if evento.key == pygame.K_r:  # Volver a jugar
+                if evento.key == pygame.K_r: 
                     return True
-                elif evento.key == pygame.K_q:  # Salir
+                elif evento.key == pygame.K_q:
                     pygame.quit()
                     exit()
 def juego():
-    global pantalla
+    global pantalla #Variable de instancia 
     pantalla = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     info_pantalla = pygame.display.Info()
     global ANCHO_PANTALLA, ALTO_PANTALLA, TAMANO_CELDA, ANCHO_TABLERO, ALTO_TABLERO
@@ -202,7 +192,6 @@ def juego():
     ALTO_PANTALLA = info_pantalla.current_h
     TAMANO_CELDA = min(ALTO_PANTALLA // ALTO_TABLERO, (ANCHO_PANTALLA - 400) // ANCHO_TABLERO)
 
-    # Offset para centrar el tablero
     offset_x = (ANCHO_PANTALLA - (ANCHO_TABLERO * TAMANO_CELDA)) // 2
     offset_y = (ALTO_PANTALLA - (ALTO_TABLERO * TAMANO_CELDA)) // 2
 
@@ -218,23 +207,18 @@ def juego():
         ejecutando = True
 
         while ejecutando:
-            # Pintar toda la pantalla con gris oscuro
             pantalla.fill((50, 50, 50))  
-            
-            # Pintar solo la zona del tablero con fondo negro
+
             pygame.draw.rect(pantalla, COLOR_FONDO,
                              (offset_x, offset_y, ANCHO_TABLERO * TAMANO_CELDA, ALTO_TABLERO * TAMANO_CELDA))
-            
-            # Dibujar el tablero y la pieza actual dentro del área negra
+
             dibujar_tablero_centrado(tablero, offset_x, offset_y)
             dibujar_pieza_actual_centrada(tablero, pieza, color, x, y, offset_x, offset_y)
             
-            # Fondo gris para la interfaz adicional a la derecha
             pygame.draw.rect(pantalla, (50, 50, 50), (offset_x + ANCHO_TABLERO * TAMANO_CELDA, offset_y,
                                                       ANCHO_PANTALLA - (offset_x + ANCHO_TABLERO * TAMANO_CELDA),
                                                       ALTO_TABLERO * TAMANO_CELDA))
-            
-            # Dibujar la pieza siguiente y texto
+
             dibujar_pieza_siguiente_centrada(siguiente_pieza, siguiente_color, offset_x + ANCHO_TABLERO * TAMANO_CELDA)
             puntaje_texto = fuente.render(f"Puntaje: {puntaje}", True, (255, 255, 255))
             pantalla.blit(puntaje_texto, (offset_x + ANCHO_TABLERO * TAMANO_CELDA + 10, offset_y + 10))
@@ -285,7 +269,6 @@ def juego():
             break
 
 def dibujar_tablero_centrado(tablero, offset_x, offset_y):
-    """Dibuja el tablero centrado en la pantalla."""
     for fila in range(ALTO_TABLERO):
         for columna in range(ANCHO_TABLERO):
             if tablero[fila][columna] != 0:
@@ -297,7 +280,6 @@ def dibujar_tablero_centrado(tablero, offset_x, offset_y):
 
 
 def dibujar_pieza_actual_centrada(tablero, pieza, color, x, y, offset_x, offset_y):
-    """Dibuja la pieza actual teniendo en cuenta el centrado."""
     sombra_y = calcular_sombra(tablero, pieza, x, y)
     for fila in range(len(pieza)):
         for columna in range(len(pieza[fila])):
@@ -317,7 +299,6 @@ def dibujar_pieza_actual_centrada(tablero, pieza, color, x, y, offset_x, offset_
 
 
 def dibujar_pieza_siguiente_centrada(pieza, color, offset_x):
-    """Dibuja la siguiente pieza en el área derecha, centrada verticalmente."""
     offset_y = (ALTO_PANTALLA - len(pieza) * TAMANO_CELDA) // 2
     for fila in range(len(pieza)):
         for columna in range(len(pieza[fila])):
